@@ -19,7 +19,7 @@ public final class TextStyle {
     public static final int ITALIC = 1 << 1; // bit 1, value 2
     public static final int UNDERLINE = 1 << 2; // bit 2, value 4
 
-    public TextStyle() { }
+    private TextStyle() { }
 
     /**
      * Checks whether the given style flag is set in the bitmask.
