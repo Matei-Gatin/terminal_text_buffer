@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TerminalCellTest {
+
     @Test
     void defaultCellIsEmpty() {
         TerminalCell cell = new TerminalCell();
