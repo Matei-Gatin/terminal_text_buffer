@@ -524,4 +524,43 @@ public class TerminalBufferTest {
                     () -> buffer.getCharAt(10, 0));
         }
     }
+
+    @Nested
+    class WideCharacters {
+        @Test
+        void writeWideCharAdvancesCursorByTwo() {
+            buffer.writeText("你");
+            assertEquals(2, buffer.getCursorCol());
+            assertEquals(0, buffer.getCursorRow());
+        }
+
+        @Test
+        void writeWideCharAtLastColumnWraps() {
+            buffer.setCursorPosition(9, 0);
+            buffer.writeText("你");
+
+            assertEquals(2, buffer.getCursorCol());
+            assertEquals(1, buffer.getCursorRow());
+            assertEquals("你", buffer.getLineAsString(1));
+        }
+
+        @Test
+        void writeMixedNarrowAndWideText() {
+            buffer.writeText("A你B");
+
+            assertEquals("A你B", buffer.getLineAsString(0));
+            assertEquals(4, buffer.getCursorCol());
+        }
+
+        @Test
+        void writeWideCharWrapsAndScrolls() {
+            TerminalBuffer small = new TerminalBuffer(4, 2, 10);
+            small.setCursorPosition(3, 1); // last col and row
+            small.writeText("你");
+
+            assertEquals(2, small.getCursorCol());
+            assertEquals(1, small.getCursorRow());
+            assertEquals(1, small.getScrollbackSize());
+        }
+    }
 }

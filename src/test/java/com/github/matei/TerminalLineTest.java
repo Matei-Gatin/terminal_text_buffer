@@ -153,4 +153,94 @@ public class TerminalLineTest {
 
         assertEquals("AB   ", line.getFullText());
     }
+
+    // Wide Chars
+    @Test
+    void setCellWideCharOccupiesTwoCells() {
+        TerminalLine line = new TerminalLine(10);
+        line.setCell(0, '你', TextAttributes.DEFAULT);
+
+        assertEquals('你', line.getCell(0).getCharacter());
+        assertTrue(line.getCell(1).isWideContinuation());
+    }
+
+    @Test
+    void setCellWideCharAtLastColumnWritesSpace() {
+        TerminalLine line = new TerminalLine(10);
+        line.setCell(9, '你', TextAttributes.DEFAULT);
+
+        assertEquals(' ', line.getCell(9).getCharacter());
+        assertFalse(line.getCell(9).isWideContinuation());
+    }
+
+    @Test
+    void setCellOverwriteContinuationClearsLeftHalf() {
+        TerminalLine line = new TerminalLine(10);
+        line.setCell(2, '你', TextAttributes.DEFAULT);
+
+        line.setCell(3, 'A', TextAttributes.DEFAULT);
+
+        assertEquals(TerminalCell.EMPTY_CHAR, line.getCell(2).getCharacter());
+        assertEquals('A', line.getCell(3).getCharacter());
+        assertFalse(line.getCell(3).isWideContinuation());
+    }
+
+    @Test
+    void setCellOverwriteWideCharClearsContinuation() {
+        TerminalLine line = new TerminalLine(10);
+        line.setCell(2, '你', TextAttributes.DEFAULT);
+
+        line.setCell(2, 'A', TextAttributes.DEFAULT);
+
+        assertEquals('A', line.getCell(2).getCharacter());
+        assertEquals(TerminalCell.EMPTY_CHAR, line.getCell(3).getCharacter());
+        assertFalse(line.getCell(3).isWideContinuation());
+    }
+
+    @Test
+    void setCellWideOverwritesExistingWideChar() {
+        TerminalLine line = new TerminalLine(10);
+        line.setCell(1, '你', TextAttributes.DEFAULT);
+
+        line.setCell(0, '日', TextAttributes.DEFAULT);
+
+        assertEquals('日', line.getCell(0).getCharacter());
+        assertTrue(line.getCell(1).isWideContinuation());
+        assertFalse(line.getCell(2).isWideContinuation());
+    }
+
+    @Test
+    void getTextWithWideCharDoesNotOutputExtraSpace() {
+        TerminalLine line = new TerminalLine(10);
+        line.setCell(0, '你', TextAttributes.DEFAULT);
+        line.setCell(2, 'A', TextAttributes.DEFAULT);
+
+        assertEquals("你A", line.getText());
+    }
+
+    @Test
+    void writeWideCharStopsAtBoundary() {
+        TerminalLine line = new TerminalLine(5);
+        int written = line.write(0, "AB你C", TextAttributes.DEFAULT);
+
+        // A at 0, B at 1, 你 at 2-3, C at 4
+        assertEquals('A', line.getCell(0).getCharacter());
+        assertEquals('B', line.getCell(1).getCharacter());
+        assertEquals('你', line.getCell(2).getCharacter());
+        assertTrue(line.getCell(3).isWideContinuation());
+        assertEquals('C', line.getCell(4).getCharacter());
+        assertEquals(4, written);
+    }
+
+    @Test
+    void writeWideCharDoesNotFitAtEnd() {
+        TerminalLine line = new TerminalLine(5);
+        int written = line.write(0, "ABCD你", TextAttributes.DEFAULT);
+
+        assertEquals(5, written);
+        assertEquals('A', line.getCell(0).getCharacter());
+        assertEquals('D', line.getCell(3).getCharacter());
+        assertEquals(' ', line.getCell(4).getCharacter());
+        assertFalse(line.getCell(4).isWideContinuation());
+    }
 }

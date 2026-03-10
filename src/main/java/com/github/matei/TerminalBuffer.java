@@ -1,5 +1,7 @@
 package com.github.matei;
 
+import com.github.matei.util.CharWidthUtil;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -161,6 +163,17 @@ public class TerminalBuffer {
      */
     public void writeText(String text) {
         for (int i = 0; i < text.length(); i++) {
+            boolean isWide = CharWidthUtil.isWide(text.charAt(i));
+
+            if (isWide && cursorCol == width - 1) {
+                cursorCol = 0;
+                if (cursorRow == height - 1) {
+                    scrollUp();
+                } else {
+                    cursorRow++;
+                }
+            }
+
             if (cursorCol >= width) {
                 cursorCol = 0;
                 if (cursorRow == height - 1) {
@@ -170,13 +183,27 @@ public class TerminalBuffer {
                 }
             }
 
-            screen.get(cursorRow).setCell(cursorCol, text.charAt(i), currentAttributes);
-            cursorCol++;
+            TerminalLine line = screen.get(cursorRow);
+            line.setCell(cursorCol, text.charAt(i), currentAttributes);
+
+            if (isWide) cursorCol += 2;
+            else cursorCol++;
         }
     }
 
     public void insertText(String text) {
         for (int i = 0; i < text.length(); i++) {
+            boolean isWide = CharWidthUtil.isWide(text.charAt(i));
+
+            if (isWide && cursorCol == width - 1) {
+                cursorCol = 0;
+                if (cursorRow == height - 1) {
+                    scrollUp();
+                } else {
+                    cursorRow++;
+                }
+            }
+
             if (cursorCol >= width) {
                 cursorCol = 0;
                 if (cursorRow == height - 1) {
@@ -186,8 +213,11 @@ public class TerminalBuffer {
                 }
             }
 
-            screen.get(cursorRow).insert(cursorCol, String.valueOf(text.charAt(i)), currentAttributes);
-            cursorCol++;
+            TerminalLine line = screen.get(cursorRow);
+            line.insert(cursorCol, String.valueOf(text.charAt(i)), currentAttributes);
+
+            if (isWide) cursorCol += 2;
+            else cursorCol++;
         }
     }
 

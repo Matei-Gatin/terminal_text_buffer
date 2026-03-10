@@ -1,5 +1,7 @@
 package com.github.matei;
 
+import com.github.matei.util.CharWidthUtil;
+
 /**
  * A single row in the terminal grid.
  * <p>
@@ -38,7 +40,38 @@ public class TerminalLine {
 
     public void setCell(int col, char ch, TextAttributes attrs) {
         validateColumn(col);
+
+        int codePoint = ch;
+        boolean isWide = CharWidthUtil.isWide(codePoint);
+
+        // if writing wide char, col + 1 needs to exist
+        if (isWide && col + 1 >= cells.length) {
+            // wide char doesn't fit, write a space instead
+            cells[col].set(' ', attrs);
+            return;
+        }
+
+        // if writing at continuation cell clear the left half
+        if (cells[col].isWideContinuation() && col > 0) {
+            cells[col - 1].clear();
+        }
+
+        // cell[col] is wide char clear continuation at col + 1
+        if (!cells[col].isEmpty() && col + 1 < cells.length && cells[col + 1].isWideContinuation()) {
+            cells[col + 1].clear();
+        }
+
+        if (isWide && col + 1 < cells.length) {
+            if (!cells[col + 1].isWideContinuation() && col + 2 < cells.length
+                    && cells[col + 2].isWideContinuation()) {
+                cells[col + 2].clear();
+            }
+        }
+
         cells[col].set(ch, attrs);
+        if (isWide) {
+            cells[col + 1].setWideContinuation(true);
+        }
     }
 
     public void fill(char ch, TextAttributes attrs) {
@@ -70,7 +103,23 @@ public class TerminalLine {
 
         char[] chars = text.toCharArray();
         for (int i = col; i < cells.length && charsWritten < text.length(); i++) {
-            cells[i].set(chars[charsWritten], attrs);
+            char candidate = chars[charsWritten];
+
+            if (CharWidthUtil.isWide(candidate)) {
+                if (i + 1 >= cells.length) {
+                    cells[i].set(' ', attrs);
+                    charsWritten++;
+                    break;
+                }
+
+                cells[i].set(candidate, attrs);
+                cells[i + 1].setWideContinuation(true);
+                charsWritten++;
+                i++;
+                continue;
+            }
+
+            cells[i].set(candidate, attrs);
             charsWritten++;
         }
 
@@ -87,10 +136,20 @@ public class TerminalLine {
      */
     public void insert(int col, String text, TextAttributes attrs) {
         validateColumn(col);
-        int insertLen = Math.min(text.length(), cells.length);
+        int insertLen = Math.min(text.length(), cells.length - col); // room for insertion
         for (int i = cells.length - 1; i >= col + insertLen; i--) {
             TerminalCell cell = cells[i - insertLen];
             cells[i].set(cell.getCharacter(), cell.getAttributes());
+            if (cell.isWideContinuation()) {
+                cells[i].setWideContinuation(true);
+            }
+        }
+
+        if (cells.length > 0 && cells[cells.length - 1].getCharacter() != TerminalCell.EMPTY_CHAR
+                && !cells[cells.length - 1].isWideContinuation()) {
+            if (CharWidthUtil.isWide(cells[cells.length - 1].getCharacter())) {
+                cells[cells.length - 1].clear();
+            }
         }
 
         for (int i = 0; i < text.length(); i++) {
@@ -108,7 +167,7 @@ public class TerminalLine {
         int end = cells.length;
 
         for (int i = cells.length - 1; i >= 0; i--) {
-            if (!cells[i].isEmpty()) {
+            if (!cells[i].isEmpty() && !cells[i].isWideContinuation()) {
                 break;
             }
             end--;
@@ -116,6 +175,7 @@ public class TerminalLine {
 
         StringBuilder sb = new StringBuilder(end);
         for (int i = 0; i < end; i++) {
+            if (cells[i].isWideContinuation()) continue;
             sb.append(cells[i].isEmpty() ? ' ' : cells[i].getCharacter());
         }
 
@@ -131,6 +191,7 @@ public class TerminalLine {
     public String getFullText() {
         StringBuilder sb = new StringBuilder(cells.length);
         for (TerminalCell cell : cells) {
+            if (cell.isWideContinuation()) continue;
             sb.append(cell.isEmpty() ? ' ' : cell.getCharacter());
         }
         return sb.toString();

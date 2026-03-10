@@ -11,6 +11,7 @@ public class TerminalCell {
 
     private char character;
     private TextAttributes attributes;
+    private boolean wideContinuation; // right half of a wide char
 
     /**
      * Creates an empty cell with default attributes.
@@ -18,6 +19,7 @@ public class TerminalCell {
     public TerminalCell() {
         this.character = EMPTY_CHAR;
         this.attributes = TextAttributes.DEFAULT;
+        this.wideContinuation = false;
     }
 
     /**
@@ -28,6 +30,18 @@ public class TerminalCell {
     public TerminalCell(char character, TextAttributes attributes) {
         this.character = character;
         this.attributes = attributes;
+    }
+
+    public boolean isWideContinuation() {
+        return wideContinuation;
+    }
+
+    public void setWideContinuation(boolean wideContinuation) {
+        if (wideContinuation) {
+            clear();
+        }
+
+        this.wideContinuation = wideContinuation;
     }
 
     public char getCharacter() {
@@ -41,11 +55,13 @@ public class TerminalCell {
     public void set(char character, TextAttributes attributes) {
         this.character = character;
         this.attributes = attributes;
+        this.wideContinuation = false;
     }
 
     public void clear() {
         this.character = EMPTY_CHAR;
         this.attributes = TextAttributes.DEFAULT;
+        this.wideContinuation = false;
     }
 
     public boolean isEmpty() {
