@@ -61,6 +61,7 @@ public class TerminalLine {
             cells[col + 1].clear();
         }
 
+        // write wide char. If col + 1 has wide char clear continuation at col + 2
         if (isWide && col + 1 < cells.length) {
             if (!cells[col + 1].isWideContinuation() && col + 2 < cells.length
                     && cells[col + 2].isWideContinuation()) {

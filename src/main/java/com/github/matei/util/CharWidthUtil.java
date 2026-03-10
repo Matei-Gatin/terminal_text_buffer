@@ -1,5 +1,8 @@
 package com.github.matei.util;
 
+/**
+ * Utility for determining the display width of characters in a terminal.
+ */
 public final class CharWidthUtil {
 
     private CharWidthUtil() {
@@ -8,14 +11,6 @@ public final class CharWidthUtil {
 
     public static boolean isWide(int codePoint) {
         return isWideCodePoint(codePoint);
-    }
-
-    public static int charWidth(int codePoint) {
-        if (isWideCodePoint(codePoint)) {
-            return 2;
-        }
-
-        return 1;
     }
 
     private static boolean isWideCodePoint(int codePoint) {
