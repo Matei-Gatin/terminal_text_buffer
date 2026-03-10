@@ -88,7 +88,6 @@ public class TerminalLine {
     public void insert(int col, String text, TextAttributes attrs) {
         validateColumn(col);
         int insertLen = Math.min(text.length(), cells.length);
-
         for (int i = cells.length - 1; i >= col + insertLen; i--) {
             TerminalCell cell = cells[i - insertLen];
             cells[i].set(cell.getCharacter(), cell.getAttributes());
