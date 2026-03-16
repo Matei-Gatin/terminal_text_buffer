@@ -162,21 +162,17 @@ public class TerminalBuffer {
      * @param text the text to write
      */
     public void writeText(String text) {
-        for (int i = 0; i < text.length(); i++) {
-            boolean isWide = CharWidthUtil.isWide(text.charAt(i));
+        // O(N) (where N is the length of the string)
 
-            if (isWide && cursorCol == width - 1) {
-                cursorCol = 0;
-                if (cursorRow == height - 1) {
-                    scrollUp();
-                } else {
-                    cursorRow++;
-                }
-            }
+        if (text == null || text.isEmpty()) return;
 
+        int offset = 0;
+        int len = text.length();
+
+        while (offset < len) {
             if (cursorCol >= width) {
                 cursorCol = 0;
-                if (cursorRow == height - 1) {
+                if (cursorRow >= height - 1) {
                     scrollUp();
                 } else {
                     cursorRow++;
@@ -184,29 +180,47 @@ public class TerminalBuffer {
             }
 
             TerminalLine line = screen.get(cursorRow);
-            line.setCell(cursorCol, text.charAt(i), currentAttributes);
+            int availableSpace = width - cursorCol;
 
-            if (isWide) cursorCol += 2;
-            else cursorCol++;
+            int charsToWrite = 0;
+            int visualWidthConsumed = 0;
+
+            for (int i = offset; i < len; i++) {
+                int charWidth = getCharWidth(text.charAt(i));
+
+                if (visualWidthConsumed + charWidth > availableSpace) {
+                    break;
+                }
+
+                visualWidthConsumed += charWidth;
+                charsToWrite++;
+            }
+
+            if (charsToWrite == 0) {
+                cursorCol = width;
+                continue;
+            }
+
+            String chunk = text.substring(offset, offset + charsToWrite);
+            line.write(cursorCol, chunk, currentAttributes);
+
+            cursorCol += visualWidthConsumed;
+            offset += charsToWrite;
         }
     }
 
     public void insertText(String text) {
-        for (int i = 0; i < text.length(); i++) {
-            boolean isWide = CharWidthUtil.isWide(text.charAt(i));
+        // O(N) (where N is the length of the string)
 
-            if (isWide && cursorCol == width - 1) {
-                cursorCol = 0;
-                if (cursorRow == height - 1) {
-                    scrollUp();
-                } else {
-                    cursorRow++;
-                }
-            }
+        if (text == null || text.isEmpty()) return;
 
+        int offset = 0;
+        int len = text.length();
+
+        while (offset < len) {
             if (cursorCol >= width) {
                 cursorCol = 0;
-                if (cursorRow == height - 1) {
+                if (cursorRow >= height) {
                     scrollUp();
                 } else {
                     cursorRow++;
@@ -214,10 +228,32 @@ public class TerminalBuffer {
             }
 
             TerminalLine line = screen.get(cursorRow);
-            line.insert(cursorCol, String.valueOf(text.charAt(i)), currentAttributes);
+            int availableSpace = width - cursorCol;
 
-            if (isWide) cursorCol += 2;
-            else cursorCol++;
+            int charsToInsert = 0;
+            int visualWidthConsumed = 0;
+
+            for (int i = offset; i < len; i++) {
+                int charWidth = getCharWidth(text.charAt(i));
+
+                if (visualWidthConsumed + charWidth > availableSpace) {
+                    break;
+                }
+
+                visualWidthConsumed += charWidth;
+                charsToInsert++;
+            }
+
+            if (charsToInsert == 0) {
+                cursorCol = width;
+                return;
+            }
+
+            String chunk = text.substring(offset, offset + charsToInsert);
+            line.insert(cursorCol, chunk, currentAttributes);
+
+            cursorCol += visualWidthConsumed;
+            offset += charsToInsert;
         }
     }
 
@@ -298,6 +334,10 @@ public class TerminalBuffer {
     }
 
     // === Helpers ===
+    private int getCharWidth(int codePoint) {
+        return CharWidthUtil.isWide(codePoint) ? 2 : 1;
+    }
+
     private void validateParams(int width, int height, int maxScrollback) {
         if (width <= 0) {
             throw new IllegalArgumentException("Width must be positive: " + width);

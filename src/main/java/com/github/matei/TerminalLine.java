@@ -108,19 +108,19 @@ public class TerminalLine {
 
             if (CharWidthUtil.isWide(candidate)) {
                 if (i + 1 >= cells.length) {
-                    cells[i].set(' ', attrs);
+                    setCell(i, ' ', attrs);
                     charsWritten++;
                     break;
                 }
 
-                cells[i].set(candidate, attrs);
+                setCell(i, candidate, attrs);
                 cells[i + 1].setWideContinuation(true);
                 charsWritten++;
                 i++;
                 continue;
             }
 
-            cells[i].set(candidate, attrs);
+            setCell(i, candidate, attrs);
             charsWritten++;
         }
 
@@ -140,7 +140,7 @@ public class TerminalLine {
         int insertLen = Math.min(text.length(), cells.length - col); // room for insertion
         for (int i = cells.length - 1; i >= col + insertLen; i--) {
             TerminalCell cell = cells[i - insertLen];
-            cells[i].set(cell.getCharacter(), cell.getAttributes());
+            setCell(i, cell.getCharacter(), cell.getAttributes());
             if (cell.isWideContinuation()) {
                 cells[i].setWideContinuation(true);
             }
@@ -154,7 +154,7 @@ public class TerminalLine {
         }
 
         for (int i = 0; i < text.length(); i++) {
-            cells[col + i].set(text.charAt(i), attrs);
+            setCell(col + i, text.charAt(i), attrs);
         }
     }
 
