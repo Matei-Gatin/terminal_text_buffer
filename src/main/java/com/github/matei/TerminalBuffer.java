@@ -1,11 +1,11 @@
 package com.github.matei;
 
-import com.github.matei.util.CharWidthUtil;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+
+import com.github.matei.util.CharWidthUtil;
 
 /**
  * Core terminal text buffer implementation.
@@ -205,7 +205,7 @@ public class TerminalBuffer {
             line.write(cursorCol, chunk, currentAttributes);
 
             cursorCol += visualWidthConsumed;
-            offset += charsToWrite;
+            offset += charsToWrite; // every character is visited only once
         }
     }
 
@@ -220,7 +220,7 @@ public class TerminalBuffer {
         while (offset < len) {
             if (cursorCol >= width) {
                 cursorCol = 0;
-                if (cursorRow >= height) {
+                if (cursorRow >= height - 1) {
                     scrollUp();
                 } else {
                     cursorRow++;
@@ -246,14 +246,14 @@ public class TerminalBuffer {
 
             if (charsToInsert == 0) {
                 cursorCol = width;
-                return;
+                continue;
             }
 
             String chunk = text.substring(offset, offset + charsToInsert);
             line.insert(cursorCol, chunk, currentAttributes);
 
             cursorCol += visualWidthConsumed;
-            offset += charsToInsert;
+            offset += charsToInsert; // every character is visited only once
         }
     }
 

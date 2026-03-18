@@ -560,5 +560,58 @@ public class TerminalBufferTest {
             assertEquals(1, small.getCursorRow());
             assertEquals(1, small.getScrollbackSize());
         }
+
+        @Test
+        void insertStringContainingWideCharPushesText() {
+            TerminalBuffer small = new TerminalBuffer(4, 2, 10);
+            small.writeText("A你B");
+            assertEquals(4, small.getCursorCol());
+            small.setCursorPosition(1, 0);
+            small.insertText("字J");
+            assertEquals("A字J", small.getLineAsString(0));
+        }
+
+        @Test
+        void insertStringAtEndWrapsCursorOnNewLine() {
+            TerminalBuffer small = new TerminalBuffer(4, 2, 10);
+            small.writeText("A你B");
+            assertEquals("A你B", small.getLineAsString(0));
+            small.setCursorPosition(1, 0);
+            small.insertText("字JK");
+            assertEquals("A字J", small.getLineAsString(0));
+            assertEquals("K", small.getLineAsString(1));
+        }
+
+        @Test
+        void insertWideCharOnWideContinuationDeletesExistingWideChar() {
+            TerminalBuffer small = new TerminalBuffer(4, 2, 10);
+            small.writeText("A你B");
+            small.setCursorPosition(2, 0);
+            small.insertText("字J"); // A 字 , J
+            assertEquals("A 字", small.getLineAsString(0));
+            assertEquals("J", small.getLineAsString(1));
+        }
+
+        @Test
+        void insertPushesWideCharOffEdgeLeavesSpace() {
+            TerminalBuffer small = new TerminalBuffer(4, 1, 10);
+            small.writeText("AB字");
+            assertEquals("AB字", small.getLineAsString(0));
+
+            small.setCursorPosition(0, 0);
+            small.insertText("X");
+            assertEquals("XAB ", small.getLineAsString(0));
+        }
+
+        @Test
+        void insertWideCharInLastColumnForcesWrap() {
+            TerminalBuffer small = new TerminalBuffer(4, 2, 10);
+            small.writeText("ABC");
+            assertEquals(3, small.getCursorCol());
+
+            small.insertText("字");
+            assertEquals("ABC", small.getLineAsString(0));
+            assertEquals("字", small.getLineAsString(1));
+        }
     }
 }

@@ -30,6 +30,7 @@ public class TerminalCell {
     public TerminalCell(char character, TextAttributes attributes) {
         this.character = character;
         this.attributes = attributes;
+        this.wideContinuation = false;
     }
 
     public boolean isWideContinuation() {

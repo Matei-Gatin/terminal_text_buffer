@@ -114,7 +114,6 @@ public class TerminalLine {
                 }
 
                 setCell(i, candidate, attrs);
-                cells[i + 1].setWideContinuation(true);
                 charsWritten++;
                 i++;
                 continue;
@@ -137,7 +136,14 @@ public class TerminalLine {
      */
     public void insert(int col, String text, TextAttributes attrs) {
         validateColumn(col);
-        int insertLen = Math.min(text.length(), cells.length - col); // room for insertion
+
+        int visualWidth = 0;
+        for (int i = 0; i < text.length(); i++) {
+            visualWidth += CharWidthUtil.isWide(text.charAt(i)) ? 2 : 1;
+        }
+
+        int insertLen = Math.min(visualWidth, cells.length - col); // room for insertion
+
         for (int i = cells.length - 1; i >= col + insertLen; i--) {
             TerminalCell cell = cells[i - insertLen];
             setCell(i, cell.getCharacter(), cell.getAttributes());
@@ -153,8 +159,12 @@ public class TerminalLine {
             }
         }
 
-        for (int i = 0; i < text.length(); i++) {
-            setCell(col + i, text.charAt(i), attrs);
+        int currentCol = col;
+        for (int i = 0; i < text.length() && currentCol < cells.length; i++) {
+            char ch = text.charAt(i);
+            setCell(currentCol, ch, attrs);
+
+            currentCol += CharWidthUtil.isWide(ch) ? 2 : 1;
         }
     }
 
