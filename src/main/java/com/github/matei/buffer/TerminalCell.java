@@ -1,4 +1,4 @@
-package com.github.matei;
+package com.github.matei.buffer;
 
 /**
  * A single cell in the terminal grid.

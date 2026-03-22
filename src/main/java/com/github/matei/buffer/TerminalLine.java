@@ -1,4 +1,4 @@
-package com.github.matei;
+package com.github.matei.buffer;
 
 import com.github.matei.util.CharWidthUtil;
 

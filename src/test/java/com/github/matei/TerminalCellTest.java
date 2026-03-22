@@ -1,5 +1,9 @@
 package com.github.matei;
 
+import com.github.matei.buffer.TerminalCell;
+import com.github.matei.buffer.TerminalColor;
+import com.github.matei.buffer.TextAttributes;
+import com.github.matei.buffer.TextStyle;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

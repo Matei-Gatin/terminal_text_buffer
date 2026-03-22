@@ -1,4 +1,4 @@
-package com.github.matei;
+package com.github.matei.buffer;
 
 /**
  * Represents terminal text style flags using a bitmask.
