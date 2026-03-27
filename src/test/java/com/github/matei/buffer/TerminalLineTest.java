@@ -1,6 +1,5 @@
-package com.github.matei;
+package com.github.matei.buffer;
 
-import com.github.matei.buffer.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.stream.IntStream;

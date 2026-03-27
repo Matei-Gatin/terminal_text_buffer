@@ -194,6 +194,37 @@ public class TerminalLine {
     }
 
     /**
+     * Returns the line content as a string WITH ANSI color codes,
+     * useful for printing to the console and retaining cell styles.
+     */
+    public String getAnsiText() {
+        int end = cells.length;
+
+        for (int i = cells.length - 1; i >= 0; i--) {
+            if (!cells[i].isEmpty() && !cells[i].isWideContinuation()) {
+                break;
+            }
+            end--;
+        }
+
+        StringBuilder sb = new StringBuilder(end);
+        for (int i = 0; i < end; i++) {
+            if (cells[i].isWideContinuation()) continue;
+
+            TextAttributes attrs = cells[i].getAttributes();
+
+            sb.append(attrs.getForeground().getForegroundCode());
+            sb.append(attrs.getBackground().getBackgroundCode());
+
+            sb.append(cells[i].isEmpty() ? ' ' : cells[i].getCharacter());
+
+            sb.append("\u001b[0m");
+        }
+
+        return sb.toString();
+    }
+
+    /**
      * Returns the full line content as a string, including trailing spaces.
      * Empty cells are represented as spaces.
      *

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
+import com.github.matei.emulator.TerminalEmulator;
 import com.github.matei.util.CharWidthUtil;
 
 /**
@@ -21,7 +22,7 @@ import com.github.matei.util.CharWidthUtil;
  *   <li>Columns: 0 to width-1</li>
  * </ul>
  */
-public class TerminalBuffer {
+public class TerminalBuffer implements TerminalEmulator {
     private final int width;
     private final int height;
     private final int maxScrollback;
@@ -151,6 +152,19 @@ public class TerminalBuffer {
         screen.add(new TerminalLine(width));
     }
 
+    public void scrollDown(int n) {
+        for (int i = 0; i < n; i++) {
+            screen.removeLast();
+            screen.addFirst(new TerminalLine(width)); // add empty lines at the top
+        }
+    }
+
+    public void scrollUp(int n) {
+        for (int i = 0; i < n; i++) {
+            scrollUp();
+        }
+    }
+
     // Editing
 
     /**
@@ -277,6 +291,23 @@ public class TerminalBuffer {
         scrollBack.clear();
     }
 
+    public void eraseInDisplay(int n) {
+        switch (n) {
+            case 0 -> clearScreenFromCursorPosToEnd();
+            case 1 -> clearScreenFromTopToCursorPos();
+            case 2 -> clearScreen();
+        }
+    }
+
+    public void eraseInLine(int n) {
+        TerminalLine currentLine = screen.get(cursorRow);
+        switch (n) {
+            case 0 -> clearFromCursorToEndOfLine(currentLine);
+            case 1 -> clearFromBeginningOfLineToCursor(currentLine);
+            case 2 -> clearEntireLine(currentLine);
+        }
+    }
+
     // Content Access
     public char getCharAt(int col, int row) {
         return getLine(row).getCell(col).getCharacter();
@@ -288,6 +319,10 @@ public class TerminalBuffer {
 
     public String getLineAsString(int row) {
         return getLine(row).getText();
+    }
+
+    public String getLineAsAnsiString(int row) {
+        return getLine(row).getAnsiText();
     }
 
     /**
@@ -382,5 +417,53 @@ public class TerminalBuffer {
         }
 
         throw new IllegalStateException("Failed to resolve scrollback row: " + row);
+    }
+
+    private void clearScreenFromTopToCursorPos() {
+        int currentCol = getCursorCol();
+        int currentRow = getCursorRow();
+
+        for (int i = 0; i < currentRow; i++) {
+            TerminalLine lineToDel = screen.get(i);
+            lineToDel.clear();
+        }
+
+        TerminalLine currentLine = screen.get(currentRow);
+        for (int i = 0; i < currentCol; i++) {
+            TerminalCell cellToDel = currentLine.getCell(i);
+            cellToDel.clear();
+        }
+    }
+
+    private void clearScreenFromCursorPosToEnd() {
+        int currentCol = getCursorCol();
+        int currentRow = getCursorRow();
+
+        TerminalLine currentLine = screen.get(currentRow);
+        for (int i = currentCol; i < width; i++) {
+            TerminalCell cellToDel = currentLine.getCell(i);
+            cellToDel.clear();
+        }
+
+        for (int i = currentRow + 1; i < height; i++) {
+            TerminalLine lineToDel = screen.get(i);
+            lineToDel.clear();
+        }
+    }
+
+    private void clearFromCursorToEndOfLine(TerminalLine line) {
+        for (int i = cursorCol; i < width; i++) {
+            line.getCell(i).clear();
+        }
+    }
+
+    private void clearFromBeginningOfLineToCursor(TerminalLine line) {
+        for (int i = 0; i <= cursorCol; i++) {
+            line.getCell(i).clear();
+        }
+    }
+
+    private void clearEntireLine(TerminalLine line) {
+        line.clear();
     }
 }
