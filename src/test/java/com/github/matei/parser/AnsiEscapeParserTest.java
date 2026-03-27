@@ -1,7 +1,6 @@
-package com.github.matei.ansi_escape_parser;
+package com.github.matei.parser;
 
 import com.github.matei.buffer.TerminalBuffer;
-import com.github.matei.parser.AnsiEscapeParser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
