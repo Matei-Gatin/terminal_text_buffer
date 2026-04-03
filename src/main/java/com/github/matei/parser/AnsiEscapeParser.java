@@ -63,9 +63,21 @@ public class AnsiEscapeParser {
                         state = TerminalState.CSI_ENTRY;
                         parameters.clear();
                         currentParam = 0;
+                    } else if (c == ']') {
+                        state = TerminalState.OSC_STRING;
                     } else {
                         state = TerminalState.GROUND;
                     }
+                }
+
+                case OSC_STRING -> {
+
+                    if (c == '\u0007') { // OSC strings end with BEL or ST
+                        state = TerminalState.GROUND;
+                    } else if (c == Constants.ESCAPE) {
+                        state = TerminalState.ESCAPE;
+                    }
+                    // Just eat character
                 }
 
                 case CSI_ENTRY, CSI_PARAM -> {
@@ -78,6 +90,9 @@ public class AnsiEscapeParser {
                         currentParam = 0;
                         state = TerminalState.CSI_PARAM;
 
+                    } else if (c == '?' || c == '>' || c == '=' || c == '<') {
+                        // Parameter modifiers (like ?2004h), are ignored for now.
+                        state = TerminalState.CSI_PARAM;
                     } else {
                         parameters.add(currentParam);
 
